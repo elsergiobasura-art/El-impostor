@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Juego del Impostor — Estilo Impostor (Avanzado)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #050816;
+    --panel: rgba(7, 10, 30, 0.96);
+    --panel-soft: rgba(15, 23, 42, 0.85);
+    --accent: #e11d48;
+    --accent2: #22d3ee;
+    --accent-soft: rgba(225,29,72,0.12);
+    --danger: #f97316;
+    --danger-soft: rgba(249,115,22,0.12);
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --border: rgba(148,163,184,0.7);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 10% 0%, #4c1d95 0, transparent 55%),
+      radial-gradient(circle at 90% 0%, #0369a1 0, transparent 55%),
+      radial-gradient(circle at 50% 100%, #be123c 0, #020617 60%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .scanlines {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.04) 1px,
+      transparent 1px
+    );
+    background-size: 100% 3px;
+    opacity: .35;
+    mix-blend-mode: soft-light;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    width: 100%;
+    max-width: 980px;
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 14px 10px 12px;
+    z-index: 1;
+  }
+
+  @media (min-width: 768px) {
+    .app {
+      padding: 20px 18px 18px;
+    }
+  }
+
+  header, main, footer {
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 4px 10px;
+  }
+
+  .title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-square {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid rgba(248,250,252,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(circle at 0 0, #22d3ee 0, transparent 55%),
+      radial-gradient(circle at 100% 100%, #e11d48 0, transparent 55%),
+      #020617;
+    box-shadow:
+      0 0 18px rgba(34,211,238,0.7),
+      0 0 28px rgba(225,29,72,0.7);
+    font-weight: 800;
+    font-size: 1.4rem;
+  }
+
+  .title-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .title-text h1 {
+    font-size: 1.1rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .title-sub {
+    font-size: .7rem;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: .16em;
+  }
+
+  main {
+    padding: 2px 0 4px;
+  }
+
+  .main-inner {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    width: 100%;
+  }
+
+  .glass-panel {
+    background: var(--panel);
+    border-radius: 18px;
+    border: 1px solid rgba(148,163,184,0.6);
+    padding: 12px 12px 12px;
+    box-shadow:
+      0 18px 40px rgba(15,23,42,0.9),
+      0 0 0 1px rgba(15,23,42,0.9);
+    backdrop-filter: blur(18px);
+  }
+
+  /* Transición entre pantallas (configuración / revelar / final / bienvenida) */
+  .panel-transition {
+    opacity: 0;
+    transform: translateX(14px);
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  .panel-transition.panel-active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .panel-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .panel-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .9rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  .panel-title-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(148,163,184,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+  }
+
+  .panel-caption {
+    font-size: .72rem;
+    color: var(--muted);
+  }
+
+  .chip {
+    font-size: .7rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(148,163,184,0.7);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .welcome-text {
+    font-size: .8rem;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .welcome-highlight {
+    color: var(--accent2);
+    font-weight: 600;
+  }
+
+  .timeline {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    font-size: .78rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .timeline-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .timeline-index {
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(148,163,184,0.8);
+    font-size: .6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .timeline-text { line-height: 1.3; }
+
+  .btn {
+    border-radius: 999px;
+    border: none;
+    padding: 8px 16px;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform .1s, box-shadow .1s, background .1s, opacity .1s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: radial-gradient(circle at 0 0,#22d3ee,#0ea5e9);
+    color: #0b1120;
+    box-shadow:
+      0 10px 30px rgba(34,211,238,0.7),
+      0 0 16px rgba(6,182,212,0.8);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 14px 38px rgba(34,211,238,0.85),
+      0 0 24px rgba(6,182,212,1);
+  }
+  .btn-ghost {
+    border: 1px solid rgba(148,163,184,0.8);
+    background: var(--panel-soft);
+    color: var(--muted);
+  }
+  .btn-ghost:hover {
+    background: rgba(15,23,42,1);
+    color: var(--text);
+    transform: translateY(-1px);
+  }
+  .btn-small { padding: 6px 11px; font-size: .8rem; }
+
+  .hidden { display: none !important; }
+  .center { text-align: center; }
+
+  .step-bar {
+    margin-top: 2px;
+    margin-bottom: 6px;
+  }
+
+  .step-line {
+    width: 100%;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(15,23,42,0.9);
+    overflow: hidden;
+    box-shadow: inset 0 0 6px rgba(15,23,42,1);
+  }
+
+  .step-line-inner {
+    width: 25%;
+    height: 100%;
+    background: linear-gradient(90deg,#22d3ee,#e11d48);
+    box-shadow: 0 0 12px rgba(34,211,238,0.8);
+    transition: width .25s ease;
+  }
+
+  .steps-indicator {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: .7rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .steps-indicator span {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(15,23,42,0.9);
+    border: 1px solid transparent;
+  }
+  .steps-indicator .active {
+    border-color: rgba(34,211,238,0.9);
+    color: #e0f2fe;
+    box-shadow: 0 0 8px rgba(34,211,238,0.8);
+  }
+
+  label {
+    display: block;
+    font-size: .78rem;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  input {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 9px;
+    border: 1px solid rgba(31,41,55,0.9);
+    background: radial-gradient(circle at 0 0,rgba(15,23,42,1),rgba(3,7,18,1));
+    color: var(--text);
+    font-size: .9rem;
+    outline: none;
+  }
+  input:focus {
+    border-color: #22d3ee;
+    box-shadow:
+      0 0 0 1px rgba(34,211,238,0.8),
+      0 0 16px rgba(8,145,178,0.9);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .hint-text {
+    font-size: .76rem;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .names-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .name-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .name-row label {
+    width: 90px;
+    font-size: .76rem;
+    color: var(--muted);
+    margin-bottom: 0;
+  }
+  .name-row input { flex: 1; }
+  @media (max-width: 480px) {
+    .name-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .name-row label { width: 100%; }
+  }
+
+  .difficulty-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  @media (min-width: 640px) {
+    .difficulty-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .difficulty-card {
+    position: relative;
+    border-radius: 14px;
+    padding: 10px 11px 9px;
+    border: 1px solid rgba(55,65,81,0.9);
+    background:
+      radial-gradient(circle at 0 0, rgba(34,211,238,0.14), transparent 60%),
+      radial-gradient(circle at 100% 100%, rgba(225,29,72,0.16), transparent 60%),
+      rgba(15,23,42,0.98);
+    min-height: 80px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: transform .1s, box-shadow .1s, border .1s;
+  }
+  .difficulty-card input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .difficulty-header-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+  }
+
+  .difficulty-label {
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+  .difficulty-desc {
+    font-size: .74rem;
+    color: var(--muted);
+  }
+  .difficulty-tag {
+    align-self: flex-start;
+    margin-top: 3px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: .66rem;
+    border: 1px solid rgba(148,163,184,0.7);
+    color: var(--muted);
+  }
+
+  .difficulty-card.easy { border-color: rgba(56,189,248,0.7); }
+  .difficulty-card.medium { border-color: rgba(251,191,36,0.8); }
+  .difficulty-card.hard { border-color: rgba(248,113,113,0.9); }
+
+  .difficulty-card.selected {
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(34,211,238,0.6),
+      0 10px 26px rgba(15,23,42,1);
+  }
+  
+  .difficulty-card.easy.selected {
+    border-color: rgba(34,197,94,0.95);
+    background:
+      radial-gradient(circle at 0 0, rgba(34,197,94,0.25), transparent 60%),
+      radial-gradient(circle at 100% 100%, rgba(22,163,74,0.25), transparent 60%),
+      rgba(5,46,22,0.98);
+  }
+    .difficulty-card.medium.selected {
+    border-color: rgba(245,158,11,0.95);
+    background:
+      radial-gradient(circle at 0 0, rgba(245,158,11,0.35), transparent 60%),
+      radial-gradient(circle at 100% 100%, rgba(217,119,6,0.35), transparent 60%),
+      rgba(120,53,15,0.98);
+  }
+  .difficulty-card.hard.selected {
+    border-color: rgba(248,113,113,0.98);
+    background:
+      radial-gradient(circle at 0 0, rgba(248,113,113,0.3), transparent 60%),
+      radial-gradient(circle at 100% 100%, rgba(220,38,38,0.3), transparent 60%),
+      rgba(76,5,25,0.98);
+  }
+
+  .chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .hint-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .hint-pill {
+    position: relative;
+    border-radius: 12px;
+    padding: 7px 9px;
+    border: 1px solid rgba(55,65,81,0.9);
+    background: rgba(15,23,42,0.96);
+    font-size: .75rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    cursor: pointer;
+    transition: border .1s, box-shadow .1s, transform .08s, background .1s;
+    min-height: 48px;
+  }
+  .hint-pill:hover {
+    transform: translateY(-1px);
+    border-color: rgba(148,163,184,1);
+  }
+  .hint-pill input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .hint-pill .dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 999px;
+    border: 2px solid rgba(148,163,184,0.9);
+    box-shadow: 0 0 0 1px rgba(15,23,42,1);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .hint-pill .label-main { font-weight: 600; }
+  .hint-pill .label-sub { font-size: .7rem; color: var(--muted); }
+
+  .hint-pill.selected {
+    border-color: rgba(34,211,238,0.9);
+    background:
+      radial-gradient(circle at 0 0,rgba(34,211,238,0.18),transparent 60%),
+      radial-gradient(circle at 100% 100%,rgba(225,29,72,0.14),transparent 60%),
+      rgba(15,23,42,0.98);
+    box-shadow: 0 0 0 1px rgba(34,211,238,0.5);
+  }
+  .hint-pill.selected .dot {
+    border-color: transparent;
+    background: radial-gradient(circle,#22d3ee,#0ea5e9);
+    box-shadow: 0 0 7px rgba(34,211,238,1);
+  }
+
+  .pill-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:6px;
+  }
+
+  .role-box {
+    margin-top: 8px;
+    padding: 10px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    border: 1px solid rgba(225,29,72,0.95);
+    font-size: .92rem;
+  }
+  .role-box.impostor {
+    background: var(--danger-soft);
+    border-color: rgba(249,115,22,0.95);
+  }
+  .word {
+    font-weight: 700;
+    font-size: 1.02rem;
+    color: #f9a8d4;
+  }
+
+  /* Animación al revelar rol */
+  .role-reveal {
+    animation: flipReveal .5s ease forwards;
+  }
+  @keyframes flipReveal {
+    0% { transform: rotateY(90deg); opacity: 0; }
+    70% { transform: rotateY(0deg); opacity: 1; }
+    100% { transform: rotateY(0deg); opacity: 1; }
+  }
+
+  
+  .reveal-wrapper {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+  }
+  .reveal-card { display:flex; flex-direction:column; justify-content:center; align-items:center;
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    min-height: 260px;
+    border-radius: 18px;
+    border: 1px solid rgba(148,163,184,0.95);
+    background:
+      radial-gradient(circle at 0 0, rgba(34,211,238,0.22), transparent 60%),
+      radial-gradient(circle at 100% 100%, rgba(225,29,72,0.24), transparent 60%),
+      rgba(15,23,42,0.98);
+    box-shadow:
+      0 18px 40px rgba(15,23,42,0.95),
+      0 0 22px rgba(15,23,42,1);
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .reveal-card.impostor-card {
+    border-color: rgba(249,115,22,0.98);
+    background:
+      radial-gradient(circle at 0 0, rgba(249,115,22,0.32), transparent 60%),
+      radial-gradient(circle at 100% 100%, rgba(225,29,72,0.35), transparent 60%),
+      rgba(15,23,42,0.98);
+    box-shadow:
+      0 0 26px rgba(249,115,22,0.9),
+      0 18px 40px rgba(15,23,42,1);
+  }
+  .reveal-face {
+    position: absolute;
+    inset: 0;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 6px;
+  }
+  .reveal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  .reveal-sub {
+    font-size: .8rem;
+    color: var(--muted);
+  }
+
+  .error-strong {
+    background: rgba(248,113,113,0.16);
+    border: 1px solid rgba(248,113,113,0.95);
+    padding: 6px 8px;
+    border-radius: 10px;
+    box-shadow: 0 0 14px rgba(248,113,113,0.85);
+  }
+.status {
+    margin-top: 8px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    font-size: .78rem;
+    background: rgba(15,23,42,0.95);
+    border: 1px dashed rgba(55,65,81,0.9);
+  }
+
+  .starter-banner {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    font-size: .76rem;
+    background: rgba(15,23,42,0.92);
+    border: 1px solid rgba(34,211,238,0.7);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  footer {
+    font-size: .7rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 4px 4px 6px;
+  }
+
+  .info-btn {
+    background:none;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:.8rem;
+    padding:0;
+  }
+
+  .starter-overlay {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(15,23,42,0.4), transparent 55%),
+                rgba(3,7,18,0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+  }
+  .starter-overlay-card {
+    min-width: 260px;
+    max-width: 90vw;
+    padding: 18px 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(34,211,238,0.9);
+    background:
+      radial-gradient(circle at 0 0, rgba(34,211,238,0.28), transparent 60%),
+      radial-gradient(circle at 100% 100%, rgba(225,29,72,0.32), transparent 60%),
+      rgba(15,23,42,0.98);
+    box-shadow:
+      0 22px 60px rgba(15,23,42,1),
+      0 0 30px rgba(34,211,238,0.9);
+    text-align: center;
+  }
+  .starter-overlay-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: #e0f2fe;
+    margin-bottom: 6px;
+  }
+  
+  .starter-overlay-name {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #f9a8d4;
+  }
+  .starter-overlay-name.slot-spin {
+    animation: slotDown 0.09s ease-out;
+  }
+  @keyframes slotDown {
+    0% { transform: translateY(-120%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+
+
+  .reveal-card { display:flex; flex-direction:column; justify-content:center; align-items:center;
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 320px;
+    border-radius: 16px;
+    background: rgba(15,23,42,0.9);
+    border:1px solid rgba(34,211,238,0.7);
+    box-shadow:0 0 25px rgba(34,211,238,0.6);
+    font-size:1.2rem;
+    line-height:1.4;
+    text-align:center;
+  }
+
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div class="app">
+  <header>
+    <div class="title-group">
+      <div class="logo-square">?</div>
+      <div class="title-text">
+        <h1>IMPOSTOR</h1>
+        <div class="title-sub">MODO LOCAL</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="main-inner">
+      <section id="welcome" class="glass-panel panel-transition">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <div class="panel-title">
+              <span class="panel-title-icon">👾</span>
+              <span>Bienvenida</span>
+            </div>
+            <div class="panel-caption">Pequeño juego social para descubrir quién miente.</div>
+          </div>
+        </div>
+
+        <p class="welcome-text">
+          En cada ronda hay uno o varios <span class="welcome-highlight">impostores</span> que no conocen la palabra secreta.
+          El resto sí. Tendréis que describir, sospechar y acusar... ¡sin revelar demasiado!
+        </p>
+
+        <div class="timeline">
+          <div class="timeline-row">
+            <div class="timeline-index">1</div>
+            <div class="timeline-text">Elegid cuántos jugáis y el número de impostores.</div>
+          </div>
+          <div class="timeline-row">
+            <div class="timeline-index">2</div>
+            <div class="timeline-text">Escribid los nombres de los jugadores.</div>
+          </div>
+          <div class="timeline-row">
+            <div class="timeline-index">3</div>
+            <div class="timeline-text">Seleccionad una o varias dificultades.</div>
+          </div>
+          <div class="timeline-row">
+            <div class="timeline-index">4</div>
+            <div class="timeline-text">Elegid categorías y tipos de pista para el impostor.</div>
+          </div>
+        </div>
+
+        <div class="center">
+          <button type="button" class="btn btn-primary" onclick="startSetup()">
+            Iniciar configuración
+          </button>
+        </div>
+      </section>
+
+      <section id="setup" class="glass-panel panel-transition hidden">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <div class="panel-title">
+              <span class="panel-title-icon">⚙️</span>
+              <span>Configuración</span>
+            </div>
+            <div class="panel-caption">Sigue los pasos y deja el resto al azar.</div>
+          </div>
+        </div>
+
+        <div class="step-bar">
+          <div class="step-line"><div id="stepLineInner" class="step-line-inner"></div></div>
+        </div>
+
+        <div class="steps-indicator">
+          <span id="stepBadge1" class="active">1 · Jugadores</span>
+          <span id="stepBadge2">2 · Nombres</span>
+          <span id="stepBadge3">3 · Dificultad</span>
+          <span id="stepBadge4">4 · Categorías y pistas</span>
+        </div>
+
+        <div id="setupStep1">
+          <div class="chips-row">
+            <span class="chip">Configuración básica</span>
+          </div>
+          <div class="grid">
+            <div>
+              <label for="players">Número de jugadores</label>
+              <input id="players" type="number" min="3" value="5">
+            </div>
+            <div>
+              <label for="impostors">Número de impostores</label>
+              <input id="impostors" type="number" min="1" value="1">
+            </div>
+          </div>
+          <p class="hint-text">Debe haber al menos 3 jugadores y al menos 1 impostor (pero no pueden ser todos impostores).</p>
+          <div class="center" style="margin-top:10px;">
+            <button type="button" class="btn btn-primary btn-small" onclick="goToStep(2)">Siguiente · Nombres</button>
+          </div>
+        </div>
+
+        <div id="setupStep2" class="hidden">
+          <div class="chips-row">
+            <span class="chip">Identidad</span>
+          </div>
+          <label style="margin-bottom:4px;">Escribe los nombres. Si dejas alguno vacío, se usará “Jugador X”.</label>
+          <div id="namesContainer" class="names-container"></div>
+          <div class="center" style="margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost btn-small" onclick="goToStep(1)">Volver</button>
+            <button type="button" class="btn btn-primary btn-small" onclick="goToStep(3)">Siguiente · Dificultad</button>
+          </div>
+        </div>
+
+        <div id="setupStep3" class="hidden">
+          <div class="chips-row">
+            <span class="chip">Palabra secreta</span>
+          </div>
+          <label style="margin-bottom:4px;">Dificultad de la palabra</label>
+
+          <p class="hint-text">
+            Puedes combinar varias dificultades. La palabra se elige al azar entre las seleccionadas.
+          </p>
+          <div class="difficulty-grid">
+            <label class="difficulty-card easy selected">
+              <input type="checkbox" class="difficulty-checkbox" value="easy" checked>
+              <div class="difficulty-header-row">
+                <div class="difficulty-label">Fácil</div>
+                <button type="button" class="info-btn" onclick="toggleDifficultyInfo(event, 'easy')" title="Más información">ℹ️</button>
+              </div>
+              <p class="info-helper" style="font-size:0.7rem;color:#9ca3af;margin-top:2px;">Pulsa ℹ️ para ver más información.</p>
+              <div class="difficulty-desc hidden" id="diff-desc-easy">
+                Palabras comunes y muy conocidas. Ideal para las primeras partidas o para grupos mezclados.
+              </div>
+              <div class="difficulty-tag">Modo relajado</div>
+            </label>
+            <label class="difficulty-card medium">
+              <input type="checkbox" class="difficulty-checkbox" value="medium">
+              <div class="difficulty-header-row">
+                <div class="difficulty-label">Media</div>
+                <button type="button" class="info-btn" onclick="toggleDifficultyInfo(event, 'medium')" title="Más información">ℹ️</button>
+              </div>
+              <p class="info-helper" style="font-size:0.7rem;color:#9ca3af;margin-top:2px;">Pulsa ℹ️ para ver más información.</p>
+              <div class="difficulty-desc hidden" id="diff-desc-medium">
+                Palabras algo más específicas. Obliga a pensar un poco más las pistas.
+              </div>
+              <div class="difficulty-tag">Un poco de tensión</div>
+            </label>
+            <label class="difficulty-card hard">
+              <input type="checkbox" class="difficulty-checkbox" value="hard">
+              <div class="difficulty-header-row">
+                <div class="difficulty-label">Difícil</div>
+                <button type="button" class="info-btn" onclick="toggleDifficultyInfo(event, 'hard')" title="Más información">ℹ️</button>
+              </div>
+              <p class="info-helper" style="font-size:0.7rem;color:#9ca3af;margin-top:2px;">Pulsa ℹ️ para ver más información.</p>
+              <div class="difficulty-desc hidden" id="diff-desc-hard">
+                Palabras raras o técnicas. Recomendado para grupos acostumbrados a este tipo de juegos.
+              </div>
+              <div class="difficulty-tag">Solo para valientes</div>
+            </label>
+          </div>
+
+          <p id="difficultySummary" class="hint-text" style="margin-top:6px;"></p>
+          <p id="difficultyError" class="hint-text" style="color:#fecaca; margin-top:4px;"></p>
+          <p class="hint-text" style="margin-top:4px;">
+            La dificultad <b>solo afecta a la elección de la palabra secreta</b>,
+            no a las <b>pistas del impostor</b>
+ ni a la forma de jugar.
+          </p>
+
+          <div class="center" style="margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost btn-small" onclick="goToStep(2)">Volver</button>
+            <button type="button" class="btn btn-primary btn-small" onclick="goToStep(4)">Siguiente · Categorías y pistas</button>
+          </div>
+        </div>
+
+        <div id="setupStep4" class="hidden">
+          <div class="chips-row">
+            <span class="chip">Qué adivináis</span>
+          </div>
+          <div class="grid" style="margin-top:4px;">
+            <div>
+              <label>Categorías de la palabra</label>
+<p class="hint-text" style="font-size:0.75rem;margin-top:4px;">Pulsa ℹ️ para ver más información sobre cada categoría.</p>
+
+
+              <!-- Primeras 3 categorías -->
+              <div class="hint-options" id="cats-main">
+                <label class="hint-pill">
+                  <input type="checkbox" class="cat-checkbox" value="comida">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🍣 Comida</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'cat-comida')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-cat-comida">Platos, alimentos y bebidas.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="cat-checkbox" value="objetos">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">📦 Objetos</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'cat-objetos')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-cat-objetos">Cosas que puedes usar o tocar.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="cat-checkbox" value="animales">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🐾 Animales</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'cat-animales')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-cat-animales">Animales que existen de verdad.</div>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Resto de categorías -->
+              <div class="hint-options hidden" id="cats-extra">
+                <label class="hint-pill">
+                  <input type="checkbox" class="cat-checkbox" value="lugares">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🌍 Lugares</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'cat-lugares')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-cat-lugares">Ciudades, sitios y espacios.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="cat-checkbox" value="videojuegos">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🎮 Videojuegos</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'cat-videojuegos')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-cat-videojuegos">Sagas y mundos de juegos.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="cat-checkbox" value="peliculas">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🎬 Películas</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'cat-peliculas')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-cat-peliculas">Títulos de cine y sagas.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="cat-checkbox" value="famosos">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🌟 Famosos</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'cat-famosos')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-cat-famosos">Personas reales conocidas.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="cat-checkbox" value="personajes">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🧙‍♂️ Personajes ficticios</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'cat-personajes')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-cat-personajes">Héroes y personajes de ficción.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="cat-checkbox" value="todas">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🎲 Todas las categorías</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'cat-todas')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-cat-todas">La palabra puede ser de cualquiera.</div>
+                  </div>
+                </label>
+              </div>
+
+              <button type="button" id="moreCatsBtn" class="btn btn-ghost btn-small" style="margin-top:6px;" onclick="toggleMoreCats()">Ver más categorías</button>
+            </div>
+
+            <div>
+              <label>Tipos de pista para el impostor</label>
+<p class="hint-text" style="font-size:0.75rem;margin-top:4px;">Pulsa ℹ️ para ver más información sobre cada tipo de pista.</p>
+
+              <!-- Solo categoría + pista de palabra por defecto -->
+              <div class="hint-options" id="hints-main">
+                <label class="hint-pill selected">
+                  <input type="checkbox" class="hint-checkbox" value="category" checked>
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🏷️ Categoría</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'hint-category')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-hint-category">Sabe de qué tipo de cosa se trata.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="hint-checkbox" value="firstRound">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🧠 Pista de palabra</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'hint-word')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-hint-word">Palabra que puede decir en su turno de la primera ronda.</div>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Más pistas → ver más opciones -->
+              <div class="hint-options hidden" id="hints-extra">
+                <label class="hint-pill">
+                  <input type="checkbox" class="hint-checkbox" value="first">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🔤 Primera letra</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'hint-first')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-hint-first">Solo ve la inicial de la palabra.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="hint-checkbox" value="last">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🔡 Última letra</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'hint-last')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-hint-last">Solo ve la letra final.</div>
+                  </div>
+                </label>
+                <label class="hint-pill">
+                  <input type="checkbox" class="hint-checkbox" value="length">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="pill-header">
+                      <div class="label-main">🔢 Número de letras</div>
+                      <button type="button" class="info-btn" onclick="togglePillInfo(event, 'hint-length')" title="Más información">ℹ️</button>
+                    </div>
+                    <div class="label-sub hidden" id="info-hint-length">Sabe cuántas letras tiene la palabra.</div>
+                  </div>
+                </label>
+              </div>
+
+              <button type="button" id="moreHintsBtn" class="btn btn-ghost btn-small" style="margin-top:6px;" onclick="toggleMoreHints()">Ver más opciones de pista</button>
+            </div>
+          </div>
+
+          <p id="setupError" class="hint-text" style="color:#fecaca;"></p>
+
+          <div class="center" style="margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost btn-small" onclick="goToStep(3)">Volver</button>
+            <button type="button" class="btn btn-primary btn-small" onclick="startGame()">Comenzar partida</button>
+          </div>
+        </div>
+      </section>
+
+      
+      <section id="reveal" class="glass-panel panel-transition hidden">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <div class="panel-title">
+              <span class="panel-title-icon">📱</span>
+              <span>Mirar tu rol</span>
+            </div>
+            <div class="panel-caption">Pasad el móvil de mano en mano. Solo uno mira a la vez.</div>
+          </div>
+          <span class="chip">No hagas trampas</span>
+        </div>
+
+        <h3 id="playerLabel" style="font-size:.9rem; margin-top:10px; margin-bottom:6px;">Jugador</h3>
+        <p class="hint-text">Tapa la pantalla para el resto. Solo esta persona puede tocar la carta.</p>
+
+        <div class="reveal-wrapper">
+          <div id="revealCard" class="reveal-card" onclick="revealRoleCard()">
+            <div id="revealFront" class="reveal-face">
+              <div class="reveal-title" id="revealPlayerName">Jugador</div>
+              <div class="reveal-sub">Toca la carta para ver tu identidad</div>
+            </div>
+            <div id="revealBack" class="reveal-face hidden"></div>
+          </div>
+        </div>
+
+        <div class="center" style="margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+          <button type="button" id="nextBtn" class="btn btn-ghost hidden" style="padding:10px 24px;font-size:0.95rem;" onclick="nextPlayer()">Revelar turno</button>
+        </div>
+      </section>
+
+
+      <section id="final" class="glass-panel panel-transition hidden">
+        <div id="starterOverlay" class="starter-overlay hidden">
+          <div class="starter-overlay-card">
+            <div class="starter-overlay-label">Empieza el turno</div>
+            <div id="starterOverlayName" class="starter-overlay-name">Jugador</div>
+          </div>
+        </div>
+
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <div class="panel-title">
+              <span class="panel-title-icon">🎭</span>
+              <span>Revelación final</span>
+            </div>
+            <div class="panel-caption">Después de votar, mirad quién mentía de verdad.</div>
+          </div>
+          <span class="chip">Fin de la ronda</span>
+        </div>
+
+        <p class="hint-text">
+          Cuando todos estéis de acuerdo con la acusación, pulsad el botón para mostrar la palabra y los impostores.
+        </p>
+        <p id="starterInfoFinal" class="starter-banner hidden">
+          <span>🔔 Empieza el turno:</span>
+          <strong id="starterNameTextFinal"></strong>
+        </p>
+
+        <button type="button" class="btn btn-ghost btn-small" onclick="revealAll()">Mostrar impostores y palabra</button>
+        <div id="result" class="status" style="margin-top:8px;"></div>
+
+        <div class="center" style="margin-top:10px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+          <button type="button" class="btn btn-primary btn-small" onclick="newRoundSameConfig()">Nueva ronda</button>
+          <button type="button" class="btn btn-ghost btn-small" onclick="backToConfig()">Volver a configuración</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer></footer>
+</div>
+
+<script>
+  const baseEasy = {
+    "comida":["Pizza","Hamburguesa","Tortilla de patatas","Paella","Espaguetis","Lasaña","Arroz","Ensalada","Helado","Chocolate"],
+    "objetos":["Mesa","Silla","Sofá","Cama","Ordenador","Móvil","Televisión","Libro","Lámpara","Mochila"],
+    "animales":["Perro","Gato","Conejo","Caballo","Vaca","Oveja","Cerdo","Pato","Gallina","Pez"],
+    "lugares":["Playa","Montaña","Bosque","Ciudad","Pueblo","Colegio","Parque","Cine","Museo","Estadio"],
+    "videojuegos":["Mario","Zelda","Minecraft","Pokémon","FIFA","Fortnite","GTA","Tetris","Rocket League","Among Us"],
+    "peliculas":["Titanic","Avatar","Shrek","Frozen","Toy Story","Jurassic Park","Star Wars","Harry Potter","El Rey León","Matrix"],
+    "famosos":["Leo Messi","Cristiano Ronaldo","Taylor Swift","Shakira","Will Smith","Brad Pitt","Robert Downey Jr","Ibai Llanos","AuronPlay","Beyoncé"],
+    "personajes":["Goku","Naruto","Luffy","Batman","Spiderman","Iron Man","Elsa","Olaf","Yoda","Darth Vader"]
+  };
+
+  const baseMedium = {
+    "comida":["Gazpacho","Salmorejo","Cocido","Empanada","Risotto","Kebab","Falafel","Sashimi","Tiramisú","Tarta de queso"],
+    "objetos":["Proyector","Pantalla","Altavoz bluetooth","Auriculares inalámbricos","Reloj inteligente","Consola","Cámara","Trípode","Micrófono","Impresora"],
+    "animales":["Panda rojo","Lince","Lemur","Suricata","Marmota","Nutria","Castor","Flamenco","Pelícano","Cisne"],
+    "lugares":["Madrid","Barcelona","Valencia","Sevilla","Lisboa","París","Londres","Roma","Tokio","Nueva York"],
+    "videojuegos":["Assassin's Creed","Final Fantasy","Need for Speed","Gran Turismo","Monster Hunter","Street Fighter","Mortal Kombat","Tekken","The Witcher","Skyrim"],
+    "peliculas":["Inception","Interstellar","Memento","Origen","Gladiator","Braveheart","Forrest Gump","Pulp Fiction","El viaje de Chihiro","Parásitos"],
+    "famosos":["Robert De Niro","Al Pacino","Meryl Streep","Tom Hanks","Morgan Freeman","Denzel Washington","Steven Spielberg","Christopher Nolan","Quentin Tarantino","Pedro Almodóvar"],
+    "personajes":["Cloud","Tifa","Sephiroth","Samus","Kirby","Sonic","Link","Zelda","Master Chief","Lara Croft"]
+  };
+
+  const baseHard = {
+    "comida":["Kimchi","Ramen","Udon","Pho","Bibimbap","Ceviche","Carpaccio","Tataki","Pad Thai","Mole"],
+    "objetos":["Fonendoscopio","Microscopio","Telescopio","Caleidoscopio","Gramófono","Metrónomo","Osciloscopio","Barómetro","Impresora 3D","Dron"],
+    "animales":["Ornitorrinco","Axolote","Narval","Okapi","Quokka","Pangolín","Tapir","Dragón de Komodo","Capibara","Tarsio"],
+    "lugares":["Machu Picchu","Chichén Itzá","Teotihuacán","Taj Mahal","Petra","Angkor Wat","Stonehenge","Alhambra","Sagrada Familia","Everest"],
+    "videojuegos":["Bloodborne","Hollow Knight","Celeste","Undertale","Dark Souls","Elden Ring","Hades","Disco Elysium","Outer Wilds","Journey"],
+    "peliculas":["Ciudadano Kane","Casablanca","Psicosis","Vértigo","2001: Una odisea del espacio","El Padrino","Blade Runner","Amadeus","El cazador","Mulholland Drive"],
+    "famosos":["Nikola Tesla","Marie Curie","Albert Einstein","Isaac Newton","Alan Turing","Charles Darwin","Stephen Hawking","Frida Kahlo","Pablo Picasso","Salvador Dalí"],
+    "personajes":["Griffith","Guts","Asuka","Rei","Shinji","Spike Spiegel","Edward Elric","Alphonse Elric","Light Yagami","L"]
+  };
+
+
+  const allCategories = ["comida","objetos","animales","lugares","videojuegos","peliculas","famosos","personajes"];
+
+  function fillTo150(list) {
+    const result = [];
+    if (!list || !list.length) return result;
+    let i = 0;
+    while (result.length < 150) {
+      result.push(list[i % list.length]);
+      i++;
+    }
+    return result;
+  }
+
+  const wordsEasy = {};
+  const wordsMedium = {};
+  const wordsHard = {};
+  allCategories.forEach(cat => {
+    wordsEasy[cat] = fillTo150(baseEasy[cat] || []);
+    wordsMedium[cat] = fillTo150(baseMedium[cat] || []);
+    wordsHard[cat] = fillTo150(baseHard[cat] || []);
+  });
+
+  const hintWordPool = [
+    "grande","pequeño","caliente","frío","rápido","lento","viejo","nuevo",
+    "común","raro","natural","artificial","caro","barato","peligroso","seguro",
+    "suave","duro","ruidoso","silencioso","oscuro","brillante","cercano","lejano"
+  ];
+
+  let totalPlayers = 0;
+  let totalImpostors = 0;
+  let secretWord = "";
+  let impostorList = [];
+  let currentPlayer = 1;
+  let currentCategory = "comida";
+  let selectedCategories = [];
+  let playerNames = [];
+
+  let wordHintEnabled = false;
+  let wordHintOptions = [];
+  let impostorHintByPlayer = {};
+  let hintTypesChosen = [];
+  let activeDifficulties = ["easy"];
+  let turnStarter = 1;
+
+  let roleRevealed = false;
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function pickRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function buildBaseHint(word, category, modes) {
+    if (!modes.length) return "";
+    const len = word.length;
+    const first = word.charAt(0);
+    const last = word.charAt(word.length - 1);
+    let catLabel = category.charAt(0).toUpperCase() + category.slice(1);
+    if (category === "peliculas") catLabel = "Películas";
+    if (category === "videojuegos") catLabel = "Videojuegos";
+    if (category === "famosos") catLabel = "Famosos";
+    if (category === "personajes") catLabel = "Personajes ficticios";
+
+    const lines = [];
+    modes.forEach(mode => {
+      switch (mode) {
+        case "first":
+          lines.push("Empieza por la letra <b>" + first + "</b>.");
+          break;
+        case "last":
+          lines.push("Termina en la letra <b>" + last + "</b>.");
+          break;
+        case "length":
+          lines.push("Tiene <b>" + len + "</b> letras.");
+          break;
+        case "category":
+          lines.push("Pertenece a la categoría <b>" + catLabel + "</b>.");
+          break;
+      }
+    });
+    return lines.join("<br>");
+  }
+
+  function buildNameInputs() {
+    const container = document.getElementById("namesContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    const playersInput = document.getElementById("players");
+    const n = parseInt(playersInput.value, 10) || 0;
+    for (let i = 1; i <= n; i++) {
+      const row = document.createElement("div");
+      row.className = "name-row";
+      const label = document.createElement("label");
+      label.textContent = "Jugador " + i;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "player-name-input";
+      input.placeholder = "Nombre del jugador " + i;
+      row.appendChild(label);
+      row.appendChild(input);
+      container.appendChild(row);
+    }
+  }
+
+  function parsePlayerNames(n) {
+    const inputs = Array.from(document.querySelectorAll(".player-name-input"));
+    const result = [];
+    for (let i = 0; i < n; i++) {
+      const base = "Jugador " + (i + 1);
+      const value = inputs[i] ? inputs[i].value.trim() : "";
+      result.push(value.length > 0 ? value : base);
+    }
+    return result;
+  }
+
+  function updateStepBadges(step) {
+    const b1 = document.getElementById("stepBadge1");
+    const b2 = document.getElementById("stepBadge2");
+    const b3 = document.getElementById("stepBadge3");
+    const b4 = document.getElementById("stepBadge4");
+    if (b1) b1.classList.toggle("active", step === 1);
+    if (b2) b2.classList.toggle("active", step === 2);
+    if (b3) b3.classList.toggle("active", step === 3);
+    if (b4) b4.classList.toggle("active", step === 4);
+
+    const lineInner = document.getElementById("stepLineInner");
+    if (lineInner) {
+      const percentages = {1:25, 2:50, 3:75, 4:100};
+      lineInner.style.width = (percentages[step] || 25) + "%";
+    }
+  }
+
+  
+  function goToStep(step) {
+    const s1 = document.getElementById("setupStep1");
+    const s2 = document.getElementById("setupStep2");
+    const s3 = document.getElementById("setupStep3");
+    const s4 = document.getElementById("setupStep4");
+    const diffError = document.getElementById("difficultyError");
+
+    if (step === 4) {
+      const checkedDiffs = Array.from(document.querySelectorAll(".difficulty-checkbox:checked"));
+      if (!checkedDiffs.length) {
+        if (diffError) {
+          diffError.textContent = "Elige al menos una dificultad antes de continuar.";
+          diffError.classList.add("error-strong");
+        }
+        updateStepBadges(3);
+        return;
+      }
+    }
+
+    if (diffError && step === 3) {
+      diffError.classList.remove("error-strong");
+    }
+
+    if (s1) s1.classList.toggle("hidden", step !== 1);
+    if (s2) s2.classList.toggle("hidden", step !== 2);
+    if (s3) s3.classList.toggle("hidden", step !== 3);
+    if (s4) s4.classList.toggle("hidden", step !== 4);
+    updateStepBadges(step);
+    if (step === 2) {
+      buildNameInputs();
+    }
+  }
+
+
+  // Transición entre secciones principales
+  function showSection(id) {
+    const sections = ["welcome","setup","reveal","final"];
+    sections.forEach(sec => {
+      const el = document.getElementById(sec);
+      if (!el) return;
+      if (sec === id) {
+        el.classList.remove("hidden");
+        el.classList.add("panel-transition");
+        void el.offsetWidth;
+        el.classList.add("panel-active");
+      } else {
+        if (!el.classList.contains("hidden")) {
+          el.classList.remove("panel-active");
+          setTimeout(() => {
+            el.classList.add("hidden");
+          }, 250);
+        }
+      }
+    });
+  }
+
+  function startSetup() {
+    showSection("setup");
+    goToStep(1);
+  }
+
+  function generateRound() {
+    const errorEl = document.getElementById("setupError");
+
+    if (!selectedCategories.length) {
+      errorEl.textContent = "Selecciona al menos una categoría.";
+      goToStep(4);
+      return false;
+    }
+
+    const randomCat = pickRandom(selectedCategories);
+    currentCategory = randomCat;
+
+    let pool = [];
+    if (activeDifficulties.includes("easy")) {
+      pool = pool.concat(wordsEasy[randomCat] || []);
+    }
+    if (activeDifficulties.includes("medium")) {
+      pool = pool.concat(wordsMedium[randomCat] || []);
+    }
+    if (activeDifficulties.includes("hard")) {
+      pool = pool.concat(wordsHard[randomCat] || []);
+    }
+    if (!pool.length) {
+      errorEl.textContent = "No hay palabras disponibles para esa combinación. Prueba otras categorías o dificultad.";
+      goToStep(4);
+      return false;
+    }
+    secretWord = pickRandom(pool);
+
+    impostorList = [];
+    while (impostorList.length < totalImpostors) {
+      const r = Math.floor(Math.random() * totalPlayers) + 1;
+      if (!impostorList.includes(r)) impostorList.push(r);
+    }
+
+    turnStarter = Math.floor(Math.random() * totalPlayers) + 1;
+
+    wordHintOptions = [];
+    impostorHintByPlayer = {};
+    if (wordHintEnabled) {
+      const shuffledPool = shuffle(hintWordPool);
+      wordHintOptions = shuffledPool.slice(0, 3);
+      const shuffledHints = shuffle(wordHintOptions.slice());
+      for (let i = 0; i < impostorList.length; i++) {
+        const playerIdx = impostorList[i];
+        const hintWord = shuffledHints[i % wordHintOptions.length];
+        impostorHintByPlayer[playerIdx] = hintWord;
+      }
+    }
+
+    currentPlayer = 1;
+
+    showSection("reveal");
+    updatePlayerUI();
+    return true;
+  }
+
+  
+  function startGame() {
+    const playersInput = document.getElementById("players");
+    const impostorsInput = document.getElementById("impostors");
+    const errorEl = document.getElementById("setupError");
+    const diffError = document.getElementById("difficultyError");
+
+    if (errorEl) {
+      errorEl.textContent = "";
+      errorEl.classList.remove("error-strong");
+    }
+    if (diffError) {
+      diffError.textContent = "";
+      diffError.classList.remove("error-strong");
+    }
+
+    totalPlayers = parseInt(playersInput.value, 10);
+    totalImpostors = parseInt(impostorsInput.value, 10);
+
+    if (isNaN(totalPlayers) || totalPlayers < 3) {
+      if (errorEl) {
+        errorEl.textContent = "Debe haber al menos 3 jugadores.";
+        errorEl.classList.add("error-strong");
+      }
+      goToStep(1);
+      return;
+    }
+    if (isNaN(totalImpostors) || totalImpostors < 1) {
+      if (errorEl) {
+        errorEl.textContent = "Debe haber al menos 1 impostor.";
+        errorEl.classList.add("error-strong");
+      }
+      goToStep(1);
+      return;
+    }
+    if (totalImpostors >= totalPlayers) {
+      if (errorEl) {
+        errorEl.textContent = "Los impostores deben ser menos que los jugadores.";
+        errorEl.classList.add("error-strong");
+      }
+      goToStep(1);
+      return;
+    }
+
+    const checkedDiffs = Array.from(document.querySelectorAll(".difficulty-checkbox:checked")).map(c => c.value);
+    if (!checkedDiffs.length) {
+      if (diffError) {
+        diffError.textContent = "Selecciona al menos una dificultad antes de empezar.";
+        diffError.classList.add("error-strong");
+      }
+      goToStep(3);
+      return;
+    }
+    activeDifficulties = checkedDiffs;
+
+    const checkedHints = Array.from(document.querySelectorAll(".hint-checkbox:checked")).map(c => c.value);
+    hintTypesChosen = checkedHints;
+    wordHintEnabled = hintTypesChosen.includes("firstRound");
+
+    const checkedCats = Array.from(document.querySelectorAll(".cat-checkbox:checked")).map(c => c.value);
+    if (!checkedCats.length) {
+      if (errorEl) {
+        errorEl.textContent = "Selecciona al menos una categoría.";
+        errorEl.classList.add("error-strong");
+      }
+      goToStep(4);
+      return;
+    }
+    if (checkedCats.includes("todas")) {
+      selectedCategories = allCategories.slice();
+    } else {
+      selectedCategories = checkedCats.filter(v => v !== "todas");
+    }
+    if (!selectedCategories.length) {
+      if (errorEl) {
+        errorEl.textContent = "Selecciona al menos una categoría válida.";
+        errorEl.classList.add("error-strong");
+      }
+      goToStep(4);
+      return;
+    }
+
+    if (selectedCategories.length === 1) {
+      const catHintChk = document.querySelector('input.hint-checkbox[value="category"]');
+      if (catHintChk) {
+        catHintChk.checked = true;
+        const pill = catHintChk.closest(".hint-pill");
+        if (pill) pill.classList.add("selected");
+      }
+      const checkedHints2 = Array.from(document.querySelectorAll(".hint-checkbox:checked")).map(c => c.value);
+      hintTypesChosen = checkedHints2;
+      wordHintEnabled = hintTypesChosen.includes("firstRound");
+    }
+
+    playerNames = parsePlayerNames(totalPlayers);
+
+    generateRound();
+  }function playerLabel(idx) {
+    const name = playerNames[idx - 1] || ("Jugador " + idx);
+    return name;
+  }
+
+  
+  function updatePlayerUI() {
+    const labelEl = document.getElementById("playerLabel");
+    const name = playerLabel(currentPlayer);
+    if (labelEl) labelEl.textContent = name;
+
+    const frontName = document.getElementById("revealPlayerName");
+    if (frontName) frontName.textContent = name;
+
+    const card = document.getElementById("revealCard");
+    const front = document.getElementById("revealFront");
+    const back = document.getElementById("revealBack");
+    if (card && front && back) {
+      roleRevealed = false;
+      card.classList.remove("impostor-card");
+      back.classList.add("hidden");
+      back.classList.remove("role-reveal");
+      front.classList.remove("hidden");
+    
+    const btn=document.getElementById("nextBtn");
+    if(btn){
+        if(currentPlayer < totalPlayers){
+            btn.textContent="Siguiente jugador";
+        } else {
+            btn.textContent="Quién empieza el turno";
+        }
+    }
+}
+
+    const nextBtn = document.getElementById("nextBtn");
+    if (nextBtn) nextBtn.classList.add("hidden");
+  }
+
+
+
+  function revealRoleCard() {
+    if (roleRevealed) return;
+    roleRevealed = true;
+
+    const card = document.getElementById("revealCard");
+    const front = document.getElementById("revealFront");
+    const back = document.getElementById("revealBack");
+    if (!card || !front || !back) return;
+
+    const isImpostor = impostorList.includes(currentPlayer);
+    let htmlInner = "";
+
+    if (isImpostor) {
+      card.classList.add("impostor-card");
+
+      const baseHint = buildBaseHint(
+        secretWord,
+        currentCategory,
+        hintTypesChosen.filter(h => h !== "firstRound")
+      );
+      const wordHint = wordHintEnabled ? (impostorHintByPlayer[currentPlayer] || "") : "";
+
+      htmlInner = "<b>ERES IMPOSTOR 😈</b><br>";
+      if (baseHint && baseHint.length > 0) {
+        htmlInner += baseHint + "<br>";
+      } else {
+        htmlInner += "No conoces la palabra.<br>";
+      }
+      if (wordHintEnabled) {
+        if (wordHint) {
+          htmlInner += "Pista para la primera ronda (palabra que puedes decir): <b>" + wordHint + "</b>";
+        } else {
+          htmlInner += "No tienes palabra especial de primera ronda, ¡improvisa!";
+        }
+      }
+    } else {
+      card.classList.remove("impostor-card");
+      htmlInner = "La palabra secreta es:<br><span class='word'>" + secretWord + "</span>";
+    }
+
+    back.innerHTML = htmlInner;
+
+    front.classList.add("hidden");
+    back.classList.remove("hidden");
+    back.classList.remove("role-reveal");
+    void back.offsetWidth;
+    back.classList.add("role-reveal");
+
+    const nextBtn = document.getElementById("nextBtn");
+    if (nextBtn) nextBtn.classList.remove("hidden");
+  }
+
+
+  function showRole() {
+    const box = document.getElementById("roleBox");
+    const isImpostor = impostorList.includes(currentPlayer);
+    box.classList.remove("hidden");
+    box.classList.remove("role-reveal");
+    void box.offsetWidth;
+    box.classList.add("role-reveal");
+
+    if (isImpostor) {
+      box.classList.add("impostor");
+
+      const baseHint = buildBaseHint(
+        secretWord,
+        currentCategory,
+        hintTypesChosen.filter(h => h !== "firstRound")
+      );
+      const wordHint = wordHintEnabled ? (impostorHintByPlayer[currentPlayer] || "") : "";
+
+      let html = "<b>ERES IMPOSTOR 😈</b><br>";
+      if (baseHint && baseHint.length > 0) {
+        html += baseHint + "<br>";
+      } else {
+        html += "No conoces la palabra.<br>";
+      }
+      if (wordHintEnabled) {
+        if (wordHint) {
+          html += "Pista para la primera ronda (palabra que puedes decir): <b>" + wordHint + "</b>";
+        } else {
+          html += "No tienes palabra especial de primera ronda, ¡improvisa!";
+        }
+      }
+
+      box.innerHTML = html;
+    } else {
+      box.classList.remove("impostor");
+      box.innerHTML = "La palabra secreta es:<br><span class='word'>" +
+                      secretWord + "</span>";
+    }
+
+    document.getElementById("showBtn").classList.add("hidden");
+    document.getElementById("nextBtn").classList.remove("hidden");
+  }
+
+  
+  
+  
+  
+  function runStarterRoulette() {
+    var overlay = document.getElementById("starterOverlay");
+    var overlayName = document.getElementById("starterOverlayName");
+    var banner = document.getElementById("starterInfoFinal");
+    var bannerName = document.getElementById("starterNameTextFinal");
+
+    if (!overlay || !overlayName || !banner || !bannerName || !playerNames || !playerNames.length) {
+      return;
+    }
+
+    var names = playerNames.slice();
+    var index = 0;
+    var count = 0;
+    var totalSpins = 24 + Math.floor(Math.random() * 10);
+
+    overlay.classList.remove("hidden");
+    banner.classList.add("hidden");
+
+    var interval = setInterval(function() {
+      // efecto tragaperras: nombre cae desde arriba
+      overlayName.classList.remove("slot-spin");
+      void overlayName.offsetWidth;
+      overlayName.textContent = names[index % names.length];
+      overlayName.classList.add("slot-spin");
+
+      index++;
+      count++;
+      if (count >= totalSpins) {
+        clearInterval(interval);
+        var finalName = playerNames[turnStarter - 1] || ("Jugador " + turnStarter);
+        overlayName.classList.remove("slot-spin");
+        void overlayName.offsetWidth;
+        overlayName.textContent = finalName;
+        overlayName.classList.add("slot-spin");
+
+        setTimeout(function() {
+          overlay.classList.add("hidden");
+          bannerName.textContent = finalName;
+          banner.classList.remove("hidden");
+        }, 5000);
+      }
+    }, 90);
+  }
+
+
+
+  function nextPlayer() {
+    currentPlayer++;
+    if (currentPlayer > totalPlayers) {
+      showSection("final");
+      const res = document.getElementById("result");
+      if (res) res.textContent = "Listos para revelar...";
+      runStarterRoulette();
+    } else {
+      updatePlayerUI();
+    }
+  }
+
+function revealAll() {
+    const result = document.getElementById("result");
+    const impostorNames = impostorList.map(i => playerNames[i - 1] || ("Jugador " + i));
+
+    let html =
+      "Impostores: <b>" + impostorNames.join(", ") +
+      "</b><br>Palabra: <b>" + secretWord + "</b>";
+
+    if (wordHintEnabled) {
+      const hintsForImpostors = impostorList.map(i => {
+        const name = playerNames[i - 1] || ("Jugador " + i);
+        const w = impostorHintByPlayer[i] || "—";
+        return name + " → " + w;
+      }).join(", ");
+      html += "<br>Pistas de primera ronda: " + hintsForImpostors;
+    }
+
+    result.innerHTML = '<div class="reveal-card">'+html+'</div>';
+  }
+
+  function newRoundSameConfig() {
+    if (!totalPlayers || !selectedCategories.length || !activeDifficulties.length) {
+      backToConfig();
+      return;
+    }
+    generateRound();
+  }
+
+  function backToConfig() {
+    const starterInfo = document.getElementById("starterInfoFinal");
+    if (starterInfo) starterInfo.classList.add("hidden");
+    showSection("setup");
+    goToStep(1);
+  }
+
+  // Mostrar / ocultar explicaciones de dificultad
+  function toggleDifficultyInfo(event, type) {
+    event.stopPropagation();
+    event.preventDefault();
+    const el = document.getElementById("diff-desc-" + type);
+    if (el) el.classList.toggle("hidden");
+  }
+
+  // Mostrar / ocultar explicaciones de categorías y pistas
+  function togglePillInfo(event, id) {
+    event.stopPropagation();
+    event.preventDefault();
+    const el = document.getElementById("info-" + id);
+    if (el) el.classList.toggle("hidden");
+  }
+
+  // Ver más / ver menos categorías
+  function toggleMoreCats() {
+    const extra = document.getElementById("cats-extra");
+    const btn = document.getElementById("moreCatsBtn");
+    if (!extra || !btn) return;
+    const isHidden = extra.classList.contains("hidden");
+    extra.classList.toggle("hidden", !isHidden);
+    btn.textContent = isHidden ? "Ver menos categorías" : "Ver más categorías";
+  }
+
+  // Ver más / ver menos pistas
+  function toggleMoreHints() {
+    const extra = document.getElementById("hints-extra");
+    const btn = document.getElementById("moreHintsBtn");
+    if (!extra || !btn) return;
+    const isHidden = extra.classList.contains("hidden");
+    extra.classList.toggle("hidden", !isHidden);
+    btn.textContent = isHidden ? "Ver menos opciones de pista" : "Ver más opciones de pista";
+  }
+
+  function updateDifficultySummary() {
+    const checked = Array.from(document.querySelectorAll(".difficulty-checkbox:checked")).map(c => c.value);
+    const map = {easy:"Fácil", medium:"Media", hard:"Difícil"};
+    const human = checked.map(v => map[v] || v).join(", ");
+    const el = document.getElementById("difficultySummary");
+    if (!el) return;
+    if (checked.length) {
+      el.textContent = "Dificultad seleccionada: " + human + ".";
+    } else {
+      el.textContent = "Selecciona al menos una dificultad.";
+    }
+  }
+
+  document.addEventListener("click", function(e) {
+    const pill = e.target.closest(".hint-pill");
+    if (pill && !e.target.classList.contains("info-btn")) {
+      const input = pill.querySelector("input.hint-checkbox, input.cat-checkbox");
+      if (input) {
+        input.checked = !input.checked;
+        pill.classList.toggle("selected", input.checked);
+      }
+    }
+    const card = e.target.closest(".difficulty-card");
+    if (card && !e.target.classList.contains("info-btn")) {
+      const input = card.querySelector("input.difficulty-checkbox");
+      if (input) {
+        input.checked = !input.checked;
+        card.classList.toggle("selected", input.checked);
+      }
+      updateDifficultySummary();
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+    showSection("welcome");
+    goToStep(1);
+    updateDifficultySummary();
+  });
+</script>
+
+</body>
+</html>
